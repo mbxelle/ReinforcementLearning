@@ -89,7 +89,7 @@ def run_ucb_one_env(q, rounds=5000, c=2.0, report_every=100):
                   " optimal chosen:", optimal_chosen,
                   " average reward:", round(avg_reward, 4))
 
-    # Return results in case you want to summarize across runs
+    # Return results 
     return {
         "optimal_arm": optimal_arm,
         "optimal_chosen": optimal_chosen,
