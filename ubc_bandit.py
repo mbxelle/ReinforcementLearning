@@ -89,7 +89,10 @@ def run_ucb_one_env(q, rounds=5000, c=2.0, report_every=100):
                   " optimal chosen:", optimal_chosen,
                   " average reward:", round(avg_reward, 4))
 
+<<<<<<< HEAD
     # Return results 
+=======
+>>>>>>> 42ac4e7 (pia.py is policy iteration algorithm and via.py is value iteration algorithm)
     return {
         "optimal_arm": optimal_arm,
         "optimal_chosen": optimal_chosen,
