@@ -149,30 +149,17 @@ class GridWorld_epsilonSoft:
         done = reward == 500
         return (self.agentPosition, reward, done)
 
-    # assuming first-visit MC since not stated in assignment outline
+    # assuming every-visit MC since not stated in assignment outline
     def updateQTable(self, trajectory):
-        # pre-calculate the first occurrence of each (S, A) pair using a dictionary: {(state, action): index}, faster lookup times
-        first_occurrences = {}
-        for idx, (state, action, reward) in enumerate(trajectory):
-            if (state, action) not in first_occurrences:
-                first_occurrences[(state, action)] = idx
-
-        # Q Table update starting from terminal state
         G = 0
         for i in range(len(trajectory) - 1, -1, -1):
             state, action, reward = trajectory[i]
             G = reward + self.gamma * G
             
-            # only update if the current index is the first occurrence
-            if i == first_occurrences.get((state, action)):
-                self.nTable[state][action] += 1
-                n = self.nTable[state][action]
-                
-                old_q = self.qTable[state][action]
-                # Incremental Average formula
-                self.qTable[state][action] = old_q + (1/n) * (G - old_q)
-
-
+            self.nTable[state][action] += 1
+            n = self.nTable[state][action]
+            old_q = self.qTable[state][action]
+            self.qTable[state][action] = old_q + (1/n) * (G - old_q)
     
     def runEpisode(self):
         # agent position already initialized, grid initialized
@@ -271,18 +258,36 @@ if __name__ == "__main__":
 
     # for testing user input comment out this section
     # -----------------------------------------------------------------------------------------
-    epsilons = [0.1, 0.2, 0.05]
+    epsilons = [0.1, 0.2]
     for e in epsilons: 
         gridW = GridWorld_epsilonSoft(episodes=episodeCount, epsilon= e)
         gridW.runEpisodes()
         gridW.visualizePolicy()
 
-    # epsilon decay ones separate because they tend to be a bit slower, easier to comment out this way
     for e in epsilons:
         gridW = GridWorld_epsilonSoft(episodes=episodeCount, epsilon= e, epsilonDecay=True)
         gridW.runEpisodes()
         gridW.visualizePolicy()
-    
+
+    # sometimes during moons server testing the process takes too long and was killed off, leaving this option here incase
+    # whoever is marking doesn't want to wait for it to finish and wants to test the user input section for P1, P2
+    while True:
+        runEP005 = input("Model with epsilon = 0.05 is slow, and can sometimes be killed for taking too long. Do you want to run it? (Yes/No) ").strip().lower()
+        if runEP005 in ["yes", "y", "1"]:
+            gridW = GridWorld_epsilonSoft(episodes=episodeCount, epsilon= 0.05, epsilonDecay=False)
+            gridW.runEpisodes()
+            gridW.visualizePolicy()
+
+            gridW = GridWorld_epsilonSoft(episodes=episodeCount, epsilon= 0.05, epsilonDecay=True)
+            gridW.runEpisodes()
+            gridW.visualizePolicy()
+            break
+        elif runEP005 in ["no", "n", "0"]:
+            break
+        else:
+            print("Invalid input. Type Yes or No.")
+
+
     # -----------------------------------------------------------------------------------------
 
     # user inputs p1, p2
