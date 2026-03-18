@@ -3,7 +3,7 @@ import time
 
 
 class GridWorld_epsilonSoft:
-    def __init__(self, episodes, gamma=0.9, p1=None, p2=None, epsilon=0.1, epsilonDecay = 0.0):
+    def __init__(self, episodes, epsilon, gamma=0.9, p1=None, p2=None, epsilonDecay = False):
         self.grid = self.generateGrid()
         self.nTable, self.qTable = self.generateTables()
         self.epsilon = epsilon
@@ -15,12 +15,16 @@ class GridWorld_epsilonSoft:
 
         # if the user inputs a P1 and P2, sum must be less than or equal to 1
         if p1 is not None and p2 is not None:
+
+            # will be handled in the "main" program/run, but will be left here just incase
             assert p1 + p2 <= 1
+            self.p1 = p1
+            self.p2 = p2
 
         # P1 and P2 are none/no user input, per assignment guideline
         else:
-            self.p1 = 9.0
-            self.p2 = 0.1
+            self.p1 = 1.0
+            self.p2 = 0.0
 
     # start the agent off in some random state (row,col)
     def initializeAgentPosition(self): 
@@ -31,7 +35,9 @@ class GridWorld_epsilonSoft:
             # agent should not spawn in a wall or terminal state G
             if self.grid[row][col] == " ":
                 self.agentPosition = (row,col)
-                self.manhattanDistance = (11 - row) + (11 - col)
+
+                # manhattan distance for stats later
+                self.manhattanDistance = row + (11 - col)
                 return self.agentPosition
 
 
@@ -229,10 +235,13 @@ class GridWorld_epsilonSoft:
         print()
     
     def runEpisodes(self):
-        print(f"MC- Epsilon Soft method (gamma = {self.gamma}, epsilon = {self.epsilon}, epsilonDecay = {self.epsilonDecay})")
+        print(f"MC- Epsilon Soft method (gamma: {self.gamma}, epsilon: {self.epsilon}, epsilonDecay: {self.epsilonDecay},  P1: {self.p1}, P2: {self.p2})")
 
         stepCount = 0
         computationalTime = 0
+
+        # used if epsilon decay is on
+        initialEpsilon = self.epsilon
 
         for i in range(1, self.episodes + 1):
             startTime = time.time()
@@ -250,20 +259,75 @@ class GridWorld_epsilonSoft:
             
             # print progress every 500 episodes
             if i % 500 == 0:
-                print(f'Episode: {i}: \n Average Time steps: {stepCount/i:.2f} \n Average Comp Time: {computationalTime/i:.6f}s \n Current Epsilon: {self.epsilon}')
+                print(f'Episode: {i}: \n Average Time steps: {stepCount/i:.2f} \n Average Comp Time: {computationalTime/i:.6f}s \n Current Epsilon: {self.epsilon:.6f}')
+            
+            if self.epsilonDecay:
+                self.epsilon = initialEpsilon * (1 - i/self.episodes)
 
 if __name__ == "__main__":
-    episodeCount = 5000
-    grid_e01 = GridWorld_epsilonSoft(episodes=episodeCount, epsilon=0.1)
-    grid_e01.runEpisodes()
-    grid_e01.visualizePolicy()
+    random.seed(int(time.time()))
 
-    grid_e005 = GridWorld_epsilonSoft(episodes=episodeCount,epsilon=0.05)
-    grid_e005.runEpisodes()
-    grid_e005.visualizePolicy()
+    episodeCount = 10000
 
-    grid_e02 = GridWorld_epsilonSoft(episodes=episodeCount, epsilon=0.2)
-    grid_e02.runEpisodes()
-    grid_e02.visualizePolicy()
+    # for testing user input comment out this section
+    # -----------------------------------------------------------------------------------------
+    epsilons = [0.1, 0.2, 0.05]
+    for e in epsilons: 
+        gridW = GridWorld_epsilonSoft(episodes=episodeCount, epsilon= e)
+        gridW.runEpisodes()
+        gridW.visualizePolicy()
 
+    # epsilon decay ones separate because they tend to be a bit slower, easier to comment out this way
+    for e in epsilons:
+        gridW = GridWorld_epsilonSoft(episodes=episodeCount, epsilon= e, epsilonDecay=True)
+        gridW.runEpisodes()
+        gridW.visualizePolicy()
+    
+    # -----------------------------------------------------------------------------------------
+
+    # user inputs p1, p2
+    print(f"Note: this will be using the same episode count and gamma as the examples")
+
+    # collect inputs, graceful error handling
+    # handle float inputs
+    def get_float(prompt):
+        while True:
+            try:
+                return float(input(prompt))
+            except ValueError:
+                print("Invalid input. Enter a number.")
+
+    user_P1 = get_float("Input P1: ")
+    user_P2 = get_float("Input P2: ")
+
+    while user_P1 + user_P2 > 1:
+        print("P1 + P2 must be <= 1")
+        user_P1 = get_float("Input P1: ")
+        user_P2 = get_float("Input P2: ")
+
+    user_e = get_float("Input epsilon: ")
+
+    # handle boolean conversion
+    while True:
+        user_edecay_input = input("Epsilon decay? (True/False): ").strip().lower()
+        if user_edecay_input in ["true", "t", "1"]:
+            user_edecay = True
+            break
+        elif user_edecay_input in ["false", "f", "0"]:
+            user_edecay = False
+            break
+        else:
+            print("Invalid input. Type True or False.")
+
+    grid_user = GridWorld_epsilonSoft(
+        episodes=episodeCount,
+        epsilon=user_e,
+        epsilonDecay=user_edecay,
+        p1=user_P1,
+        p2=user_P2
+    )
+
+    # actually run
+    grid_user.runEpisodes()
+    grid_user.visualizePolicy()
 
