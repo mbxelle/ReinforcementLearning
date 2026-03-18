@@ -1,3 +1,4 @@
+# Submitted by Longric Tran (#501162383), Michelle Bui (#501126228)
 import random
 import time
 
